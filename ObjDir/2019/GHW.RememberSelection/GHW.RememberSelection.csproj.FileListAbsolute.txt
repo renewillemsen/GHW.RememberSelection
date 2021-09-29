@@ -1,0 +1,7 @@
+C:\Users\rene\source\repos\GHW.RememberSelection\GHW.RememberSelection\bin\Debug\GHW.RememberSelection.exe.config
+C:\Users\rene\source\repos\GHW.RememberSelection\GHW.RememberSelection\bin\Debug\GHW.RememberSelection.exe
+C:\Users\rene\source\repos\GHW.RememberSelection\GHW.RememberSelection\bin\Debug\GHW.RememberSelection.pdb
+C:\Users\rene\source\repos\GHW.RememberSelection\ObjDir\2019\GHW.RememberSelection\GHW.RememberSelection.csproj.AssemblyReference.cache
+C:\Users\rene\source\repos\GHW.RememberSelection\ObjDir\2019\GHW.RememberSelection\GHW.RememberSelection.csproj.CoreCompileInputs.cache
+C:\Users\rene\source\repos\GHW.RememberSelection\ObjDir\2019\GHW.RememberSelection\GHW.RememberSelection.exe
+C:\Users\rene\source\repos\GHW.RememberSelection\ObjDir\2019\GHW.RememberSelection\GHW.RememberSelection.pdb
