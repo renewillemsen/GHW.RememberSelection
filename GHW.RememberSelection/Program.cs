@@ -116,7 +116,7 @@ namespace GHW.RememberSelection
                 var modelObjects = new ArrayList();
                 foreach (var modelObject in allParts)
                 {
-                    modelObjects.Add(modelObject);
+                    modelObjects.Add(modelObject.Key);
                 }
 
                 var select = true;
