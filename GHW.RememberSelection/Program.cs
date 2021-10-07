@@ -12,15 +12,33 @@ namespace GHW.RememberSelection
     {
         static void Main(string[] args)
         {
-            const string tempFolder = @"C:\temp\NC_Files\";
-            const string ncTemplate = "Alles"; // DSTV for Profiles
+            string tempFolder = args != null && args.Length >= 1 ? args[0] : null; // @"C:\temp\NC_Files\";
+            string ncTemplate = args != null && args.Length >= 2 ? args[1] : null; // "Alles";
 
-            if (!Directory.Exists(tempFolder))
+            if (string.IsNullOrEmpty(tempFolder))
             {
-                Directory.CreateDirectory(tempFolder);
+                Console.Write("Please specify a temporary folder: ");
+                tempFolder = Console.ReadLine();
             }
 
-            int attempt = args != null && args.Length == 1 ? Convert.ToInt32(args[0]) : 0;
+            if (string.IsNullOrEmpty(ncTemplate))
+            {
+                Console.Write("Please specify a NC Template: ");
+                ncTemplate = Console.ReadLine();
+            }
+
+            Console.WriteLine(string.Empty);
+
+            Execute(tempFolder, ncTemplate, 1);
+        }
+
+        private static void Execute(in string tempFolder, in string ncTemplate, int attempt)
+        {
+            if (!Directory.Exists(tempFolder))
+            {
+                // Necessary otherwise the NC output fails.
+                Directory.CreateDirectory(tempFolder);
+            }
 
             Console.WriteLine($"Attempt no #{attempt}.");
 
@@ -28,8 +46,8 @@ namespace GHW.RememberSelection
             var selectedObjects = modelObjectSelector.GetSelectedObjects();
             selectedObjects.SelectInstances = false;
 
+            // Create sets of unique parts.
             var allParts = new List<KeyValuePair<TSM.Part, string>>();
-
             var uniqueCombinations = new List<Dictionary<string, TSM.Part>>();
 
             while (selectedObjects.MoveNext())
@@ -62,6 +80,7 @@ namespace GHW.RememberSelection
                 }
             }
 
+            // Create NC files for each unique combination.
             try
             {
                 var modelObjects = new ArrayList();
@@ -98,7 +117,12 @@ namespace GHW.RememberSelection
                     modelObjects.Add(modelObject);
                 }
 
-                var select = modelObjectSelector.Select(modelObjects);
+                var select = true;
+                if (!modelObjectSelector.Select(modelObjects))
+                {
+                    select = false;
+                }
+
                 if (!select)
                 {
                     Console.WriteLine("Select failed");
@@ -115,7 +139,7 @@ namespace GHW.RememberSelection
                 }
                 else
                 {
-                    Main(new string[] { (++attempt).ToString() });
+                    Execute(tempFolder, ncTemplate, ++attempt);
                 }
             }
         }
