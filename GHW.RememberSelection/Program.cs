@@ -12,6 +12,8 @@ namespace GHW.RememberSelection
     {
         static void Main(string[] args)
         {
+            Console.WriteLine($"TSM.Model assembly version: {typeof(TSM.Model).Assembly.GetName().Version}");
+
             string tempFolder = args != null && args.Length >= 1 ? args[0] : null; // @"C:\temp\NC_Files\";
             string ncTemplate = args != null && args.Length >= 2 ? args[1] : null; // "Alles";
 
