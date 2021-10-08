@@ -51,13 +51,14 @@ namespace GHW.RememberSelection
             // Create sets of unique parts.
             var allParts = new List<KeyValuePair<TSM.Part, string>>();
             var uniqueCombinations = new List<Dictionary<string, TSM.Part>>();
-
+            var allObjects = new ArrayList();
             while (selectedObjects.MoveNext())
             {
                 var modelObject = selectedObjects.Current;
 
                 if (modelObject is TSM.Part part)
                 {
+                    allObjects.Add(modelObject);
                     var partNo = part.GetPartMark();
                     allParts.Add(new KeyValuePair<TSM.Part, string>(part, partNo));
 
@@ -113,14 +114,8 @@ namespace GHW.RememberSelection
             finally
             {
                 // Reset the selection to the original state.
-                var modelObjects = new ArrayList();
-                foreach (var modelObject in allParts)
-                {
-                    modelObjects.Add(modelObject.Key);
-                }
-
                 var select = true;
-                if (!modelObjectSelector.Select(modelObjects))
+                if (!modelObjectSelector.Select(allObjects))
                 {
                     select = false;
                 }
