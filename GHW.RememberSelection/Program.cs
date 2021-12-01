@@ -1,8 +1,12 @@
-﻿using System;
+﻿using CsvHelper;
+using CsvHelper.Configuration;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 
 namespace GHW.RememberSelection
 {
@@ -12,6 +16,8 @@ namespace GHW.RememberSelection
     {
         static void Main(string[] args)
         {
+            string logFile = $@"C:\temp\missing-parts-{DateTime.Now.ToString("yyyyMMddHHmmss")}.csv";
+
             Console.WriteLine($"TSM.Model assembly version: {typeof(TSM.Model).Assembly.GetName().Version}");
 
             string tempFolder = args != null && args.Length >= 1 ? args[0] : null; // @"C:\temp\NC_Files\";
@@ -31,10 +37,10 @@ namespace GHW.RememberSelection
 
             Console.WriteLine(string.Empty);
 
-            Execute(tempFolder, ncTemplate, 1);
+            Execute(tempFolder, ncTemplate, 1, logFile);
         }
 
-        private static void Execute(in string tempFolder, in string ncTemplate, int attempt)
+        private static void Execute(in string tempFolder, in string ncTemplate, int attempt, in string logFile)
         {
             if (!Directory.Exists(tempFolder))
             {
@@ -46,7 +52,6 @@ namespace GHW.RememberSelection
 
             var modelObjectSelector = new TSM.UI.ModelObjectSelector();
             var selectedObjects = modelObjectSelector.GetSelectedObjects();
-            selectedObjects.SelectInstances = false;
 
             // Create sets of unique parts.
             var allParts = new List<KeyValuePair<TSM.Part, string>>();
@@ -102,6 +107,7 @@ namespace GHW.RememberSelection
                         Console.WriteLine("Select failed");
                     }
 
+                    // Remark: This method to create NC files sometimes gives a false positive: Returns true where there are no files created!
                     var createNCFiles = TSM.Operations.Operation.CreateNCFilesFromSelected(ncTemplate, tempFolder);
                     if (!createNCFiles)
                     {
@@ -125,10 +131,15 @@ namespace GHW.RememberSelection
                     Console.WriteLine("Select failed");
                 }
 
-                int size = modelObjectSelector.GetSelectedObjects().GetSize();
+                var selector = modelObjectSelector.GetSelectedObjects();
+                int size = selector.GetSize();
 
                 if (size != allParts.Count)
                 {
+                    var missing = GetMissingParts(allParts.Select(t => t.Key), GetSelectedParts(selector));
+
+                    WriteToCsv(missing, logFile);
+
                     // This is wrong... The initial selection is not selected again.
                     Console.WriteLine($"Not all objects selected, {size}/{allParts.Count} selected.");
                     Debugger.Break();
@@ -136,9 +147,82 @@ namespace GHW.RememberSelection
                 }
                 else
                 {
-                    Execute(tempFolder, ncTemplate, ++attempt);
+                    Execute(tempFolder, ncTemplate, ++attempt, logFile);
                 }
             }
+        }
+
+        private static void WriteToCsv(in IEnumerable<TSM.Part> missing, in string logFile)
+        {
+            using (var writer = new StreamWriter(logFile))
+            {
+                var csvConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    Delimiter = ";"
+                };
+
+                using (var csv = new CsvWriter(writer, csvConfig))
+                {
+                    foreach (var part in missing)
+                    {
+                        dynamic t = new
+                        {
+                            guid = part.Identifier.GUID,
+                            id = part.Identifier.ID,
+                            id2 = part.Identifier.ID2,
+                            name = part.GetPartMark(),
+                            profile = part.Profile.ProfileString,
+                            isUpToDate = part.IsUpToDate,
+                            typeOf = part.GetType().FullName
+                        };
+
+                        csv.WriteRecord(t);
+                        csv.NextRecord();
+                    }
+                }
+            }
+        }
+
+        private static IEnumerable<TSM.Part> GetMissingParts(in IEnumerable<TSM.Part> allParts, in IEnumerable<TSM.Part> selectedParts)
+        {
+            var missing = new List<TSM.Part>();
+
+            foreach (var part in allParts)
+            {
+                var found = false;
+                foreach (var selected in selectedParts)
+                {
+                    if (selected.Identifier.Equals(part.Identifier))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    missing.Add(part);
+                }
+            }
+
+            return missing;
+        }
+
+        private static IEnumerable<TSM.Part> GetSelectedParts(in TSM.ModelObjectEnumerator selectedParts)
+        {
+            var result = new List<TSM.Part>();
+
+            while (selectedParts.MoveNext())
+            {
+                var part = selectedParts.Current as TSM.Part;
+
+                if (part != null)
+                {
+                    result.Add(part);
+                }
+            }
+
+            return result;
         }
     }
 }
